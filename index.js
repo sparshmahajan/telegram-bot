@@ -22,7 +22,7 @@ try {
         console.log('Bot started');
 
         const messageHandler = async (newMessage) => {
-            if (newMessage.message.message.includes('.search')) {
+            if (newMessage.message.message.includes('/search')) {
                 if (newMessage.message.peerId.className === 'PeerChat' || newMessage.message.out === true || newMessage.originalUpdate.className === 'UpdateNewChannelMessage' || newMessage.originalUpdate.className === 'MessageReplyHeader') {
                     return;
                 }
@@ -74,7 +74,7 @@ try {
                     }
                 };
 
-                let messageIGet = newMessage.message.message.replace('.search ', '');
+                let messageIGet = newMessage.message.message.replace('/search ', '');
                 await searchInTelegram(messageIGet);
 
                 if (messageIGet.includes(' ')) {
