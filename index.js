@@ -37,7 +37,7 @@ try {
                         filter: new Api.InputMessagesFilterDocument()
                     }
                     )) {
-                        if (message.message !== 'This group is unavailable due to copyright infringement.' && message.message !== 'This channel is unavailable due to copyright infringement.' && message.message !== 'This message is unavailable due to a copyright infringement.') {
+                        if (message.media !== null) {
                             if (!mediaIDs.has(message.media.document.id.value)) {
                                 mediaIDs.add(message.media.document.id.value);
                                 messageToSend.add(message);
@@ -51,7 +51,7 @@ try {
                         filter: new Api.InputMessagesFilterVideo()
                     }
                     )) {
-                        if (message.message !== 'This group is unavailable due to copyright infringement.' && message.message !== 'This channel is unavailable due to copyright infringement.' && message.message !== 'This message is unavailable due to a copyright infringement.') {
+                        if (message.media !== null) {
                             if (!mediaIDs.has(message.media.document.id.value)) {
                                 mediaIDs.add(message.media.document.id.value);
                                 messageToSend.add(message);
@@ -65,7 +65,7 @@ try {
                         filter: new Api.InputMessagesFilterRoundVideo()
                     }
                     )) {
-                        if (message.message !== 'This group is unavailable due to copyright infringement.' && message.message !== 'This channel is unavailable due to copyright infringement.' && message.message !== 'This message is unavailable due to a copyright infringement.') {
+                        if (message.media !== null) {
                             if (!mediaIDs.has(message.media.document.id.value)) {
                                 mediaIDs.add(message.media.document.id.value);
                                 messageToSend.add(message);
@@ -90,11 +90,15 @@ try {
                 }
 
                 await client.markAsRead(newMessage.message.fromId);
-
-                for await (const message of messageToSend) {
+                console.log(messageToSend.size)
+                for(let i=0;i<messageToSend.size;i++){
                     await client.sendMessage(newMessage.message.fromId, {
-                        message: message,
+                        message: Array.from(messageToSend)[i]
                     });
+
+                    if( i != 0 && i % 50 === 0){
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                    }
                 }
             }
         };
