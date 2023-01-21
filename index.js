@@ -105,7 +105,7 @@ try {
             message: Array.from(messageToSend)[i]
           });
 
-          if (i != 0 && i % 10 === 0) {
+          if (i != 0 && i % 30 === 0) {
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
         }
