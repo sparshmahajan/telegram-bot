@@ -98,19 +98,21 @@ try {
           return;
         }
 
-        await client.markAsRead(newMessage.message.fromId);
+        const entity = await client.getInputEntity(newMessage.message.fromId);
+
+        await client.markAsRead(entity);
         console.log(messageToSend.size)
         for (let i = 0; i < messageToSend.size; i++) {
-          await client.sendMessage(newMessage.message.fromId, {
+          await client.sendMessage(entity, {
             message: Array.from(messageToSend)[i]
           });
-
-          if (i != 0 && i % 30 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 5000));
+          
+          if( i !== 0 && i % 30 === 0) {
+            await client.floodSleepThreshold(60000);
           }
         }
 
-        await client.sendMessage(newMessage.message.fromId, {
+        await client.sendMessage(entity, {
             message: "These are all the results I get."
           });
       }
