@@ -144,7 +144,7 @@ try {
         });
         console.log(messageToSend.size);
 
-        if (messageToSend.size > 50) {
+        if (messageToSend.size > 100) {
           await client.sendMessage(userId, {
             message: `Too many results, please be more specific in your search .\n\n Try to mention the year of the movie or the season of the series like s01 and for episodes e01 but don't use both at the same time`
           });
