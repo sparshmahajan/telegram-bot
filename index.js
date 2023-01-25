@@ -3,8 +3,6 @@ const { TelegramClient, Api } = require("telegram");
 const { StoreSession } = require("telegram/sessions");
 const { NewMessage } = require("telegram/events");
 const input = require("input");
-const { generateRandomBigInt } = require('telegram/Helpers');
-const { message } = require('telegram/client');
 
 const apiId = process.env.API_ID * 1;
 const apiHash = process.env.API_HASH;
@@ -39,6 +37,7 @@ try {
 
         let messageToSend = [];
         const mediaIDs = new Set();
+        let userId ;
 
         const searchInTelegram = async (messageIGet, season) => {
 
@@ -56,6 +55,8 @@ try {
             return true;
           };
 
+          userId = newMessage.message.fromId;
+          
           for await (const message of client.iterMessages(undefined, {
             search: messageIGet,
             limit: undefined,
@@ -79,7 +80,14 @@ try {
               }
             }
           }
-
+          
+          if (messageToSend.length > 100) {
+            await client.sendMessage(userId, {
+              message: `Too many results, please be more specific in your search .\n\n Try to mention the year of the movie or the season of the series like s01 and for episodes e01 but don't use both at the same time`
+            });
+            return;
+          }
+          
           for await (const message of client.iterMessages(undefined, {
             search: messageIGet,
             limit: undefined,
@@ -103,6 +111,13 @@ try {
                 }
               }
             }
+          }
+
+          if (messageToSend.length > 100) {
+            await client.sendMessage(userId, {
+              message: `Too many results, please be more specific in your search .\n\n Try to mention the year of the movie or the season of the series like s01 and for episodes e01 but don't use both at the same time`
+            });
+            return;
           }
 
           for await (const message of client.iterMessages(undefined, {
@@ -131,6 +146,13 @@ try {
           }
         };
 
+        if (messageToSend.length > 100) {
+          await client.sendMessage(userId, {
+            message: `Too many results, please be more specific in your search .\n\n Try to mention the year of the movie or the season of the series like s01 and for episodes e01 but don't use both at the same time`
+          });
+          return;
+        }
+
         let season = newMessage.message.message.slice(-3).toLowerCase();
         let messageIGet = newMessage.message.message.replace('/search ', '');
 
@@ -152,9 +174,7 @@ try {
           });
           return;
         }
-
-        const userId = newMessage.message.fromId;
-
+        
         await client.markAsRead(userId);
 
         if (messageToSend.length > 100) {
@@ -163,22 +183,12 @@ try {
           });
           return;
         }
-
         console.log(messageToSend.length);
 
-        for (let i = 0; i < messageToSend.length; i++) {
-          await client.sendMessage(userId, {
-            message: messageToSend[i]
-          })
-        }
-
-        // await client.invoke(new Api.messages.ForwardMessages({
-        //   fromPeer: userId,
-        //   id: messageToSend.map((message) => message.id),
-        //   randomId: messageToSend.map((message) => BigInt(message.id * 1000)),
-        //   toPeer: userId,
-        //   dropAuthor: true,
-        // }));
+        await client.forwardMessages(userId,{
+          messages: messageToSend,
+          dropAuthor: true
+        });
 
         await client.sendMessage(userId, {
           message: 'These are all the results we could find , if you want to search for something else , please use the /search command'
