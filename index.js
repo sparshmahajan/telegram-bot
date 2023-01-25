@@ -3,6 +3,8 @@ const { TelegramClient, Api } = require("telegram");
 const { StoreSession } = require("telegram/sessions");
 const { NewMessage } = require("telegram/events");
 const input = require("input");
+const { generateRandomBigInt } = require('telegram/Helpers');
+const { message } = require('telegram/client');
 
 const apiId = process.env.API_ID * 1;
 const apiHash = process.env.API_HASH;
@@ -23,6 +25,10 @@ try {
 
     const messageHandler = async (newMessage) => {
       if (newMessage.message.message.includes('/search')) {
+        const myId = await client.getMe();
+        if (newMessage.message?.peerId?.userId.value === myId.id.value) {
+          return;
+        }
         if (newMessage.message.peerId.className === 'PeerChat' || newMessage.originalUpdate.className === 'UpdateNewChannelMessage' || newMessage.originalUpdate.className === 'MessageReplyHeader') {
           return;
         }
@@ -31,10 +37,25 @@ try {
           message: 'Searching for the file , please wait'
         });
 
-        const messageToSend = new Set();
+        let messageToSend = [];
         const mediaIDs = new Set();
 
         const searchInTelegram = async (messageIGet, season) => {
+
+          const checkRestricted = async (message) => {
+            if (message.peerId?.channelId) {
+              const channel = await client.invoke(new Api.channels.GetChannels({
+                id: [new Api.InputChannel({
+                  channelId: message.peerId.channelId,
+                  accessHash: message.peerId.accessHash,
+                })],
+              }));
+
+              return !(channel.chats[0]?.noforwards);
+            }
+            return true;
+          };
+
           for await (const message of client.iterMessages(undefined, {
             search: messageIGet,
             limit: undefined,
@@ -46,12 +67,14 @@ try {
             }
             if (message.media !== null) {
               if (!mediaIDs.has(message.media.document.id.value)) {
-                if (season === '') {
-                  mediaIDs.add(message.media.document.id.value);
-                  messageToSend.add(message);
-                } else if (message.message.toLowerCase().includes(season)) {
-                  mediaIDs.add(message.media.document.id.value);
-                  messageToSend.add(message);
+                if (await checkRestricted(message)) {
+                  if (season === '') {
+                    mediaIDs.add(message.media.document.id.value);
+                    messageToSend.push(message);
+                  } else if (message.message.toLowerCase().includes(season)) {
+                    mediaIDs.add(message.media.document.id.value);
+                    messageToSend.push(message);
+                  }
                 }
               }
             }
@@ -66,14 +89,17 @@ try {
             if (message.media?.document?.size.value < 52428800) {
               continue;
             }
+
             if (message.media !== null) {
               if (!mediaIDs.has(message.media.document.id.value)) {
-                if (season === '') {
-                  mediaIDs.add(message.media.document.id.value);
-                  messageToSend.add(message);
-                } else if (message.message.toLowerCase().includes(season)) {
-                  mediaIDs.add(message.media.document.id.value);
-                  messageToSend.add(message);
+                if (await checkRestricted(message)) {
+                  if (season === '') {
+                    mediaIDs.add(message.media.document.id.value);
+                    messageToSend.push(message);
+                  } else if (message.message.toLowerCase().includes(season)) {
+                    mediaIDs.add(message.media.document.id.value);
+                    messageToSend.push(message);
+                  }
                 }
               }
             }
@@ -88,14 +114,17 @@ try {
             if (message.media?.document?.size.value < 52428800) {
               continue;
             }
+
             if (message.media !== null) {
               if (!mediaIDs.has(message.media.document.id.value)) {
-                if (season === '') {
-                  mediaIDs.add(message.media.document.id.value);
-                  messageToSend.add(message);
-                } else if (message.message.toLowerCase().includes(season)) {
-                  mediaIDs.add(message.media.document.id.value);
-                  messageToSend.add(message);
+                if (await checkRestricted(message)) {
+                  if (season === '') {
+                    mediaIDs.add(message.media.document.id.value);
+                    messageToSend.push(message);
+                  } else if (message.message.toLowerCase().includes(season)) {
+                    mediaIDs.add(message.media.document.id.value);
+                    messageToSend.push(message);
+                  }
                 }
               }
             }
@@ -117,7 +146,7 @@ try {
           await searchInTelegram(messageIGet, season);
         }
 
-        if (messageToSend.size === 0) {
+        if (messageToSend.length === 0) {
           await client.sendMessage(newMessage.message.fromId, {
             message: 'No results found , please wait for Sparsh to reply'
           });
@@ -127,43 +156,34 @@ try {
         const userId = newMessage.message.fromId;
 
         await client.markAsRead(userId);
-        
-        messageToSend.forEach(async (message) => {
-          if (message.peerId?.channelId) {
-            const channels = await client.invoke(new Api.channels.GetChannels({
-              id: [new Api.InputChannel({
-                channelId: message.peerId.channelId,
-                accessHash: message.peerId.accessHash,
-              })],
-            }));
 
-            if (channels.noforwards === true) {
-              messageToSend.delete(message);
-            }
-          }
-        });
-        console.log(messageToSend.size);
-
-        if (messageToSend.size > 100) {
+        if (messageToSend.length > 100) {
           await client.sendMessage(userId, {
             message: `Too many results, please be more specific in your search .\n\n Try to mention the year of the movie or the season of the series like s01 and for episodes e01 but don't use both at the same time`
           });
           return;
         }
 
-        await client.invoke(new Api.messages.ForwardMessages({
-          fromPeer: userId,
-          id: Array.from(messageToSend).map(message => message.id),
-          randomId: Array.from(messageToSend).map(message => message.id * 2),
-          toPeer: userId,
-          dropAuthor: true,
-          asAlbum: false,
-        }));
+        console.log(messageToSend.length);
+
+        for (let i = 0; i < messageToSend.length; i++) {
+          await client.sendMessage(userId, {
+            message: messageToSend[i]
+          })
+        }
+
+        // await client.invoke(new Api.messages.ForwardMessages({
+        //   fromPeer: userId,
+        //   id: messageToSend.map((message) => message.id),
+        //   randomId: messageToSend.map((message) => BigInt(message.id * 1000)),
+        //   toPeer: userId,
+        //   dropAuthor: true,
+        // }));
 
         await client.sendMessage(userId, {
           message: 'These are all the results we could find , if you want to search for something else , please use the /search command'
         });
-      } else if(newMessage.message.message.toLowerCase() === 'hello bot'){
+      } else if (newMessage.message.message.toLowerCase() === 'hello bot') {
         await client.sendMessage(newMessage.message.fromId, {
           message: 'Hello there, I am a bot made by Sparsh to help you find movies and series in the telegram group , if you want to search for something , please use the /search command'
         });
