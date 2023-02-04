@@ -81,13 +81,6 @@ try {
             }
           }
           
-          if (messageToSend.length > 100) {
-            await client.sendMessage(userId, {
-              message: `Too many results, please be more specific in your search .\n\n Try to mention the year of the movie or the season of the series like s01 and for episodes e01 but don't use both at the same time`
-            });
-            return;
-          }
-          
           for await (const message of client.iterMessages(undefined, {
             search: messageIGet,
             limit: undefined,
@@ -111,13 +104,6 @@ try {
                 }
               }
             }
-          }
-
-          if (messageToSend.length > 100) {
-            await client.sendMessage(userId, {
-              message: `Too many results, please be more specific in your search .\n\n Try to mention the year of the movie or the season of the series like s01 and for episodes e01 but don't use both at the same time`
-            });
-            return;
           }
 
           for await (const message of client.iterMessages(undefined, {
@@ -145,13 +131,6 @@ try {
             }
           }
         };
-
-        if (messageToSend.length > 100) {
-          await client.sendMessage(userId, {
-            message: `Too many results, please be more specific in your search .\n\n Try to mention the year of the movie or the season of the series like s01 and for episodes e01 but don't use both at the same time`
-          });
-          return;
-        }
 
         let season = newMessage.message.message.slice(-3).toLowerCase();
         let messageIGet = newMessage.message.message.replace('/search ', '');
