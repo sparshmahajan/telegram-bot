@@ -3,6 +3,7 @@ const { TelegramClient, Api } = require("telegram");
 const { StoreSession } = require("telegram/sessions");
 const { NewMessage } = require("telegram/events");
 const input = require("input");
+const { markAsRead } = require('telegram/client/messages');
 
 const apiId = process.env.API_ID * 1;
 const apiHash = process.env.API_HASH;
@@ -32,30 +33,28 @@ try {
         }
 
         await client.sendMessage(newMessage.message.fromId, {
-          message: 'Searching for the file , please wait'
+          message: 'Searching for the file , please be patient for few minutes...'
         });
 
         let messageToSend = [];
         const mediaIDs = new Set();
-        let userId;
+        let userId = newMessage.message.fromId;
 
         const searchInTelegram = async (messageIGet, season) => {
 
-          const checkRestricted = async (message) => {
-            if (message.peerId?.channelId) {
-              const channel = await client.invoke(new Api.channels.GetChannels({
-                id: [new Api.InputChannel({
-                  channelId: message.peerId.channelId,
-                  accessHash: message.peerId.accessHash,
-                })],
-              }));
+          // const checkRestricted = async (message) => {
+          //   if (message.peerId?.channelId) {
+          //     const channel = await client.invoke(new Api.channels.GetChannels({
+          //       id: [new Api.InputChannel({
+          //         channelId: message.peerId.channelId,
+          //         accessHash: message.peerId.accessHash,
+          //       })],
+          //     }));
 
-              return !(channel.chats[0]?.noforwards);
-            }
-            return true;
-          };
-
-          userId = newMessage.message.fromId;
+          //     return !(channel.chats[0]?.noforwards);
+          //   }
+          //   return true;
+          // };
 
           for await (const message of client.iterMessages(undefined, {
             search: messageIGet,
@@ -68,15 +67,15 @@ try {
             }
             if (message.media !== null) {
               if (!mediaIDs.has(message.media.document.id.value)) {
-                if (await checkRestricted(message)) {
-                  if (season === '') {
-                    mediaIDs.add(message.media.document.id.value);
-                    messageToSend.push(message);
-                  } else if (message.message.toLowerCase().includes(season)) {
-                    mediaIDs.add(message.media.document.id.value);
-                    messageToSend.push(message);
-                  }
+                // if (await checkRestricted(message)) {
+                if (season === '') {
+                  mediaIDs.add(message.media.document.id.value);
+                  messageToSend.push(message);
+                } else if (message.message.toLowerCase().includes(season)) {
+                  mediaIDs.add(message.media.document.id.value);
+                  messageToSend.push(message);
                 }
+                // }
               }
             }
           }
@@ -93,15 +92,15 @@ try {
 
             if (message.media !== null) {
               if (!mediaIDs.has(message.media.document.id.value)) {
-                if (await checkRestricted(message)) {
-                  if (season === '') {
-                    mediaIDs.add(message.media.document.id.value);
-                    messageToSend.push(message);
-                  } else if (message.message.toLowerCase().includes(season)) {
-                    mediaIDs.add(message.media.document.id.value);
-                    messageToSend.push(message);
-                  }
+                // if (await checkRestricted(message)) {
+                if (season === '') {
+                  mediaIDs.add(message.media.document.id.value);
+                  messageToSend.push(message);
+                } else if (message.message.toLowerCase().includes(season)) {
+                  mediaIDs.add(message.media.document.id.value);
+                  messageToSend.push(message);
                 }
+                // }
               }
             }
           }
@@ -140,12 +139,12 @@ try {
           return;
         }
 
-        await client.invoke(new Api.messages.ForwardMessages({
-          id: messageToSend.map((message) => message.id),
-          toPeer: userId,
-          dropAuthor: true,
-        }));
-
+        for (let i = 0; i < messageToSend.length; i++) {
+          await client.sendMessage(userId, {
+            message: messageToSend[i],
+          });
+        }
+        
         await client.sendMessage(userId, {
           message: 'These are all the results we could find , if you want to search for something else , please use the /search command'
         });
