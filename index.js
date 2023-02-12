@@ -37,7 +37,7 @@ try {
 
         let messageToSend = [];
         const mediaIDs = new Set();
-        let userId ;
+        let userId;
 
         const searchInTelegram = async (messageIGet, season) => {
 
@@ -56,7 +56,7 @@ try {
           };
 
           userId = newMessage.message.fromId;
-          
+
           for await (const message of client.iterMessages(undefined, {
             search: messageIGet,
             limit: undefined,
@@ -80,36 +80,11 @@ try {
               }
             }
           }
-          
+
           for await (const message of client.iterMessages(undefined, {
             search: messageIGet,
             limit: undefined,
             filter: new Api.InputMessagesFilterVideo(),
-          }
-          )) {
-            if (message.media?.document?.size.value < 52428800) {
-              continue;
-            }
-
-            if (message.media !== null) {
-              if (!mediaIDs.has(message.media.document.id.value)) {
-                if (await checkRestricted(message)) {
-                  if (season === '') {
-                    mediaIDs.add(message.media.document.id.value);
-                    messageToSend.push(message);
-                  } else if (message.message.toLowerCase().includes(season)) {
-                    mediaIDs.add(message.media.document.id.value);
-                    messageToSend.push(message);
-                  }
-                }
-              }
-            }
-          }
-
-          for await (const message of client.iterMessages(undefined, {
-            search: messageIGet,
-            limit: undefined,
-            filter: new Api.InputMessagesFilterRoundVideo(),
           }
           )) {
             if (message.media?.document?.size.value < 52428800) {
@@ -140,6 +115,7 @@ try {
         } else {
           season = '';
         }
+
         await searchInTelegram(messageIGet, season);
 
         if (messageIGet.includes(' ')) {
@@ -153,8 +129,9 @@ try {
           });
           return;
         }
-        
+
         await client.markAsRead(userId);
+        console.log(messageToSend.length);
 
         if (messageToSend.length > 100) {
           await client.sendMessage(userId, {
@@ -162,12 +139,12 @@ try {
           });
           return;
         }
-        console.log(messageToSend.length);
 
-        await client.forwardMessages(userId,{
-          messages: messageToSend,
-          dropAuthor: true
-        });
+        await client.invoke(new Api.messages.ForwardMessages({
+          id: messageToSend.map((message) => message.id),
+          toPeer: userId,
+          dropAuthor: true,
+        }));
 
         await client.sendMessage(userId, {
           message: 'These are all the results we could find , if you want to search for something else , please use the /search command'
