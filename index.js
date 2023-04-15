@@ -150,7 +150,7 @@ try {
             message: messageToSend[i],
           });
         }
-        
+
         await client.sendMessage(userId, {
           message: 'These are all the results we could find , if you want to search for something else , please use the /search command'
         });
@@ -165,6 +165,10 @@ try {
 } catch (error) {
   console.log(error);
 }
+
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
