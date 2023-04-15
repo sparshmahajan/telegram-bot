@@ -3,7 +3,13 @@ const { TelegramClient, Api } = require("telegram");
 const { StoreSession } = require("telegram/sessions");
 const { NewMessage } = require("telegram/events");
 const input = require("input");
-const { markAsRead } = require('telegram/client/messages');
+const express = require('express');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const apiId = process.env.API_ID * 1;
 const apiHash = process.env.API_HASH;
@@ -159,3 +165,7 @@ try {
 } catch (error) {
   console.log(error);
 }
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
