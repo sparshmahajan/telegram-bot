@@ -4,12 +4,15 @@ const { StoreSession } = require("telegram/sessions");
 const { NewMessage } = require("telegram/events");
 const input = require("input");
 const express = require('express');
+const morgan = require('morgan');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(morgan("dev"));
+
 
 const apiId = process.env.API_ID * 1;
 const apiHash = process.env.API_HASH;
