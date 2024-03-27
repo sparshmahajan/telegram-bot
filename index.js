@@ -4,12 +4,17 @@ const { StoreSession } = require("telegram/sessions");
 const { NewMessage } = require("telegram/events");
 const input = require("input");
 
+const express = require('express');
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+
 const apiId = process.env.API_ID * 1;
 const apiHash = process.env.API_HASH;
 const storeSession = new StoreSession('/session');
 
 try {
-  (async () => {
+  const startBot = async () => {
     const client = new TelegramClient(storeSession, apiId, apiHash, {
       connectionRetries: 5,
     });
@@ -154,7 +159,22 @@ try {
       }
     };
     client.addEventHandler(messageHandler, new NewMessage({}));
-  })();
-} catch (error) {
-  console.log(error);
+  };
+  startBot();
+
+  app.get('/', (req, res) => {
+    res.send('Hello World');
+  });
+
+  app.get('/restart', (req, res) => {
+    startBot();
+    console.log('Bot restarted');
+    res.send('Bot restarted');
+  });
+
+  app.listen(PORT, () => {
+    console.log(`Server is running on PORT ${PORT}`);
+  });
+} catch (err) {
+  console.log(err);
 }
