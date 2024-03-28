@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "pm2": "pm2 start npm --name 'sparshmahajan/telegram-bot' -- start"
+    "pm2": "pm2 start npm --name 'sparshmahajan/telegram-bot' -- start",
+    "pm2-restart": "pm2 restart sparshmahajan/telegram-bot"
   },
   "author": "",
   "license": "ISC",
